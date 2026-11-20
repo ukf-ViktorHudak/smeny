@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="sk"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
+<title>Smeny</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Smeny">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f8fafc" id="tc">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#f8fafc;--card:#fff;--tx:#0f172a;--mut:#64748b;--bd:#e2e8f0;--sel:#3b82f6;--we:#e11d48;--warn:#d97706}
+body.dark{--bg:#0b1120;--card:#111a2e;--tx:#e2e8f0;--mut:#8291a8;--bd:#26324a;--we:#f87171;--warn:#fbbf24}
+.day,.cat,.chip,.sw{--cb:hsl(var(--h) 90% 94%);--cbd:hsl(var(--h) 80% 80%);--ct:hsl(var(--h) 75% 28%)}
+body.dark .day,body.dark .cat,body.dark .chip,body.dark .sw{--cb:hsl(var(--h) 35% 18%);--cbd:hsl(var(--h) 35% 32%);--ct:hsl(var(--h) 80% 82%)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--tx);
+ padding:calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 8px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 8px);
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body.multi{padding-bottom:calc(env(safe-area-inset-bottom) + 170px)}
+input,textarea,select{-webkit-user-select:text;user-select:text}
+.wrap{max-width:640px;margin:0 auto}
+header{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.ib{min-width:44px;height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-size:20px;display:inline-grid;place-items:center;cursor:pointer;padding:0 10px;flex:none}
+#mt{flex:1;min-width:0;text-align:center;font-weight:700;font-size:19px;background:none;border:0;color:var(--tx);font-family:inherit;height:44px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mt::after{content:" ▾";font-size:13px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:8px;margin-bottom:12px}
+.tb{display:flex;justify-content:space-between;align-items:center;margin:-2px 0 4px}
+.lnk{background:none;border:0;color:var(--sel);font:inherit;font-size:15px;font-weight:600;padding:0 8px;cursor:pointer;min-height:40px}
+.lnk.on{background:var(--sel);color:#fff;border-radius:10px;padding:0 14px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;touch-action:pan-y}
+.grid.multi{touch-action:none}
+.dow{text-align:center;font-size:11px;color:var(--mut);padding:2px 0 4px;font-weight:700}.dow.we{color:var(--we)}
+.day{height:72px;border:1px solid var(--bd);border-radius:10px;padding:3px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);overflow:hidden;cursor:pointer;position:relative}
+.day.out{opacity:.3;background:var(--bg);pointer-events:none}
+.day .n{font-size:14px;font-weight:600;line-height:22px;height:22px;min-width:22px;text-align:center}
+.day.has{background:var(--cb);border-color:var(--cbd);color:var(--ct)}
+.day.has .n{color:var(--ct)}
+.day.we .n{color:var(--we)}
+.day .n.today{background:var(--sel);color:#fff;border-radius:50%}
+.day .c{font-size:9.5px;line-height:1.15;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-align:center;overflow-wrap:anywhere;font-weight:700;padding:0 1px}
+.day .h{font-size:10.5px;white-space:nowrap;font-weight:500}
+.day .h.warn{color:var(--warn);font-weight:700}
+.day .nt{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
+.day.sel{outline:3px solid var(--sel);outline-offset:-2px}
+.title{font-weight:700;margin:4px 4px 10px;font-size:16px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.box{border:1px solid var(--bd);border-radius:12px;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mut);display:flex;flex-direction:column;gap:4px;min-width:0}
+.box b{font-size:24px;color:var(--tx);text-transform:none}
+.box.a{background:#eff6ff;border-color:#bfdbfe}.box.a b{color:#1d4ed8}
+.box.g{background:#ecfdf5;border-color:#a7f3d0}.box.g b{color:#047857}
+body.dark .box.a{background:#12233f;border-color:#1e3a8a}body.dark .box.a b{color:#93c5fd}
+body.dark .box.g{background:#0f2a22;border-color:#14532d}body.dark .box.g b{color:#6ee7b7}
+h3{font-size:11px;color:var(--mut);text-transform:uppercase;margin:16px 4px 8px;letter-spacing:.03em}
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cat{background:var(--cb);border:1px solid var(--cbd);color:var(--ct);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.cat b{display:block;font-size:22px;margin:2px 0}
+.cat small{display:block;font-weight:500;font-size:12px}
+.cat .w{color:var(--warn)}
+.note{font-size:12px;color:var(--mut);margin:12px 4px 2px}
+.bk{display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:8px 8px 8px 12px;font-size:13px;margin-bottom:12px}
+body.dark .bk{background:#2a210a;border-color:#713f12;color:#fcd34d}
+.bk span{flex:1}
+#bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding:10px calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 10px) calc(env(safe-area-inset-left) + 12px);display:none;flex-direction:column;gap:8px;box-shadow:0 -6px 24px #0002;z-index:10}
+#bar.on{display:flex}
+#bar>*{max-width:640px;width:100%;margin:0 auto}
+.bt{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mut)}
+.bt b{color:var(--tx)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--cbd);background:var(--cb);color:var(--ct);border-radius:10px;padding:0 14px;min-height:44px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.on{box-shadow:0 0 0 3px var(--ct)}
+.chip.g{--h:215;filter:saturate(.15)}
+.ov{position:fixed;inset:0;background:#0f172a80;display:none;align-items:flex-end;justify-content:center;z-index:20}
+.ov.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.sh{display:flex;align-items:center;gap:6px;padding:10px 10px 10px 12px;border-bottom:1px solid var(--bd)}
+.sh h2{flex:1;margin:0;font-size:17px;text-align:center;min-width:0}
+.sb{padding:12px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.sf{padding:10px 16px;display:flex;gap:8px;border-top:1px solid var(--bd)}
+.sf .btn{flex:1}
+.btn{min-height:46px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-size:16px;font-weight:600;cursor:pointer;padding:0 14px}
+.btn.pri{background:#2563eb;color:#fff;border-color:#2563eb}
+.btn.red{color:#dc2626}
+.l{display:block;font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;margin:16px 0 6px}
+.l:first-child{margin-top:4px}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.tr .l{margin-top:16px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;width:100%;min-height:46px;min-width:0}
+select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:30px}
+input[type=time]{-webkit-appearance:none;appearance:none;text-align:center;font-size:22px;font-weight:700;height:56px;display:block}
+input[type=time]::-webkit-date-and-time-value{text-align:center}
+input[type=checkbox]{width:22px;height:22px;min-height:0;margin:0 10px 0 0;accent-color:var(--sel);flex:none}
+textarea{min-height:84px;resize:vertical;display:block}
+.res{margin-top:12px;padding:12px;border-radius:12px;background:var(--bg);font-size:15px;text-align:center;border:1px solid var(--bd)}
+.res b{font-size:22px}
+.res.w{color:var(--warn);font-weight:600}
+.row{border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.rh{display:flex;gap:6px;align-items:center}
+.del{background:none;border:0;font-size:20px;min-width:44px;min-height:44px;cursor:pointer;flex:none}
+.ck{display:flex;align-items:center;font-size:15px;margin:12px 0 4px;min-height:30px;cursor:pointer}
+.ck.dis{opacity:.6}
+.pay{display:grid;grid-template-columns:1.35fr 1fr;gap:8px;margin-top:8px}
+.sws{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.sw{width:32px;height:32px;border-radius:50%;background:var(--cb);border:2px solid var(--cbd);cursor:pointer}
+.sw.on{border:3px solid var(--tx)}
+.hint{font-size:12.5px;color:var(--mut);margin:6px 0 0;line-height:1.4}
+.add{width:100%;border:2px dashed var(--bd);background:none;border-radius:14px;min-height:50px;color:var(--tx);font:inherit;font-weight:600;cursor:pointer}
+.sec{margin-top:24px}
+.sec h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;color:var(--mut)}
+.bb{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mo{min-height:50px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-size:15px;cursor:pointer}
+.mo.cu{color:var(--sel);font-weight:700}
+.mo.cur{background:var(--sel);color:#fff;border-color:var(--sel)}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;max-width:90vw;text-align:center}
+body.multi #toast{bottom:calc(env(safe-area-inset-bottom) + 180px)}
+#toast.on{opacity:1}
+</style></head><body>
+<div class="wrap">
+<header>
+ <button class="ib" id="pv" aria-label="Predchádzajúci mesiac">‹</button>
+ <button id="mt"></button>
+ <button class="ib" id="nx" aria-label="Ďalší mesiac">›</button>
+ <button class="ib" id="st" aria-label="Nastavenia">⚙︎</button>
+</header>
+<div class="card">
+ <div class="tb"><button class="lnk" id="td">Dnes</button><button class="lnk" id="ms">Vybrať viac dní</button></div>
+ <div class="grid" id="g"></div>
+</div>
+<div id="bk"></div>
+<div class="card" id="stats"></div>
+</div>
+
+<div id="bar">
+ <div class="bt"><span><b id="cnt">0</b> vybraných dní · ťahaj prstom</span><button class="lnk" id="bx">Zrušiť výber</button></div>
+ <div class="chips" id="bch"></div>
+</div>
+
+<div class="ov" id="dov"><div class="sheet">
+ <div class="sh"><button class="ib" id="dp" aria-label="Predchádzajúci deň">‹</button><h2 id="dt"></h2><button class="ib" id="dn" aria-label="Ďalší deň">›</button><button class="ib" id="dx" aria-label="Zavrieť">✕</button></div>
+ <div class="sb" id="db"></div>
+ <div class="sf"><button class="btn red" id="dclr">Vymazať deň</button><button class="btn pri" id="dok">Hotovo</button></div>
+</div></div>
+
+<div class="ov" id="mov"><div class="sheet">
+ <div class="sh"><button class="ib" id="py0" aria-label="Predchádzajúci rok">‹</button><h2 id="pyt"></h2><button class="ib" id="py1" aria-label="Ďalší rok">›</button><button class="ib" id="mx" aria-label="Zavrieť">✕</button></div>
+ <div class="sb"><div class="mg" id="mg"></div></div>
+</div></div>
+
+<div class="ov" id="sov"><div class="sheet">
+ <div class="sh"><h2>Nastavenia</h2><button class="ib" id="sx" aria-label="Zavrieť">✕</button></div>
+ <div class="sb">
+  <h4 style="margin:4px 0 10px;font-size:12px;text-transform:uppercase;color:var(--mut)">Moje práce a kategórie</h4>
+  <div id="scats"></div>
+  <button class="add" id="sadd">+ Pridať prácu / kategóriu</button>
+  <div class="sec"><h4>Vzhľad</h4><select id="sth"><option value="auto">Podľa iPhonu (svetlý / tmavý)</option><option value="light">Vždy svetlý</option><option value="dark">Vždy tmavý</option></select></div>
+  <div class="sec"><h4>Záloha dát</h4>
+   <p class="hint" id="lbk"></p>
+   <div class="bb"><button class="btn" id="exp">Exportovať</button><button class="btn" id="imp">Importovať</button></div>
+   <input type="file" id="fi" style="display:none">
+   <p class="hint">Export vytvorí súbor so všetkými dátami – ulož ho napr. do aplikácie Súbory (iCloud alebo „V mojom iPhone“). Import nahradí všetky súčasné dáta týmto súborom. Dá sa importovať aj súbor <i>data.json</i> z PC verzie.</p>
+  </div>
+  <div class="sec"><h4>Súkromie</h4><p class="hint">Všetky dáta sú uložené iba v tomto zariadení. Aplikácia nič neodosiela na internet (sieť má zablokovanú). Ak ikonu aplikácie vymažeš z plochy, vymažú sa aj dáta – preto si pravidelne rob zálohu.</p></div>
+ </div>
+ <div class="sf"><button class="btn" id="scn">Zrušiť</button><button class="btn pri" id="ssv">Uložiť</button></div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+const HUES=[230,150,48,215,355,185,285,330,265,30],KEY='planovac-m';
+const MN=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+const DEF={cats:[
+ {id:'a',name:'Hodinová práca',work:true,h:48,pay:'hour',rate:0},
+ {id:'b',name:'Fixná práca',work:true,h:355,pay:'day',rate:0},
+ {id:'c',name:'Voľno',work:false,h:150,pay:'day',rate:0}],days:{}};
+const $=i=>document.getElementById(i),pad=n=>String(n).padStart(2,'0'),
+ k=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`,kd=d=>k(d.getFullYear(),d.getMonth(),d.getDate()),
+ pk=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)},
+ esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+ fmt=n=>n.toLocaleString('sk-SK',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2}),
+ fmtH=n=>String(Math.round(n*100)/100).replace('.',','),
+ num=v=>{const x=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isFinite(x)&&x>0?x:0},
+ vt=s=>/^\d\d:\d\d$/.test(s||'')?s:'',isKey=s=>/^\d{4}-\d\d-\d\d$/.test(s),
+ tracks=c=>!!c&&(c.pay==='hour'||!!c.track);
+
+function normalize(o){o=o&&typeof o==='object'?o:DEF;const n={v:2,cats:[],days:{},t:{},theme:'auto',lastExport:0,lastT:null};
+ n.cats=(Array.isArray(o.cats)?o.cats:[]).filter(c=>c&&c.id!=null).map(c=>({id:String(c.id),name:String(c.name||'Bez názvu').slice(0,60),work:c.work!==false,h:isFinite(+c.h)?+c.h:230,pay:c.pay==='hour'?'hour':'day',rate:+c.rate>0?+c.rate:0,track:c.pay==='hour'||!!c.track}));
+ const ids=new Set(n.cats.map(c=>c.id));
+ if(o.days&&typeof o.days==='object')for(const x in o.days)if(isKey(x)&&ids.has(String(o.days[x])))n.days[x]=String(o.days[x]);
+ if(o.t&&typeof o.t==='object')for(const x in o.t){const t=o.t[x];if(isKey(x)&&t&&typeof t==='object'){const r={s:vt(t.s),e:vt(t.e),b:Math.max(0,Math.min(600,+t.b||0)),n:String(t.n||'').slice(0,2000)};if(r.s||r.e||r.n)n.t[x]=r}}
+ n.theme=['auto','light','dark'].includes(o.theme)?o.theme:(o.dark===true?'dark':'auto');
+ n.lastExport=+o.lastExport||0;
+ if(o.lastT&&vt(o.lastT.s)&&vt(o.lastT.e))n.lastT={s:o.lastT.s,e:o.lastT.e};
+ return n}
+
+let S;try{S=normalize(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){S=normalize(null)}
+let V=new Date();V.setDate(1);
+let multi=false,sel=new Set(),dKey=null,draft=null,PY=0;
+const cat=id=>S.cats.find(c=>c.id===id);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Uloženie zlyhalo!')}}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+const mq=matchMedia('(prefers-color-scheme: dark)');
+function applyTheme(){const d=S.theme==='dark'||(S.theme==='auto'&&mq.matches);document.body.classList.toggle('dark',d);$('tc').content=d?'#0b1120':'#f8fafc'}
+mq.addEventListener?mq.addEventListener('change',applyTheme):mq.addListener&&mq.addListener(applyTheme);
+
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ---- hodiny ---- */
+const toM=s=>{if(!s)return null;const[a,b]=s.split(':');return +a*60+ +b};
+// null = čas nevyplnený, -1 = chybný čas, inak počet hodín
+function dayH(key){const t=S.t[key];if(!t)return null;const s=toM(t.s),e=toM(t.e);if(s==null||e==null)return null;const m=e-s-(+t.b||0);if(e<=s||m<0)return -1;return m/60}
+function tget(key){return S.t[key]||(S.t[key]={s:'',e:'',b:0,n:''})}
+function tclean(key){const t=S.t[key];if(t&&!t.s&&!t.e&&!t.n)delete S.t[key]}
+
+/* ---- kalendár + štatistiky ---- */
+function render(){
+ const y=V.getFullYear(),m=V.getMonth(),dim=new Date(y,m+1,0).getDate(),off=(new Date(y,m,1).getDay()+6)%7,rows=Math.ceil((off+dim)/7)*7,todayK=kd(new Date());
+ $('mt').textContent=MN[m]+' '+y;
+ let h=['PO','UT','ST','ŠT','PI','SO','NE'].map((d,i)=>`<div class="dow${i>4?' we':''}">${d}</div>`).join('');
+ for(let i=0;i<rows;i++){const dt=new Date(y,m,1-off+i),inm=dt.getMonth()===m,key=kd(dt),c=inm&&cat(S.days[key]),t=S.t[key];
+  let hl='';
+  if(inm&&tracks(c)){const x=dayH(key);if(x>=0)hl=`<span class="h">${fmtH(x)} h</span>`;else if(x===-1)hl='<span class="h warn">⚠ čas</span>';else if(c.pay==='hour'&&key<=todayK)hl='<span class="h warn">? h</span>'}
+  h+=`<div class="day${inm?'':' out'}${i%7>4?' we':''}${c?' has':''}${sel.has(key)?' sel':''}" data-k="${key}"${c?` style="--h:${c.h}"`:''}>`+
+   `<span class="n${inm&&key===todayK?' today':''}">${dt.getDate()}</span>${c?`<span class="c">${esc(c.name)}</span>`:''}${hl}${inm&&t&&t.n?'<span class="nt"></span>':''}</div>`}
+ $('g').innerHTML=h;
+ // štatistiky
+ let w=0,u=0,tot=0,earn=0;const P={};S.cats.forEach(c=>P[c.id]={d:0,h:0,m:0,miss:0});
+ for(let d=1;d<=dim;d++){const key=k(y,m,d),c=cat(S.days[key]);if(!c){u++;continue}const p=P[c.id];p.d++;if(c.work)w++;const past=key<=kd(new Date());
+  let hh=0;if(tracks(c)){const x=dayH(key);if(x>0){hh=x;p.h+=x;tot+=x}else if(c.pay==='hour'&&past)p.miss++}
+  const e=c.pay==='hour'?c.rate*hh:c.rate;p.m+=e;earn+=e}
+ const paid=S.cats.filter(c=>c.rate>0);
+ $('stats').innerHTML=`<div class="title">Štatistiky – ${MN[m]} ${y}</div>
+ <div class="stats"><div class="box a">Pracovné dni<b>${w}</b></div><div class="box">Neoznačené dni<b>${u}</b></div>
+ <div class="box">Odpracované hodiny<b>${fmtH(tot)} h</b></div><div class="box g">Odhad zárobku<b>${fmt(earn)}</b></div></div>
+ <h3>Dni podľa kategórie</h3><div class="cats">${S.cats.map(c=>`<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${P[c.id].d} ${P[c.id].d===1?'deň':P[c.id].d>1&&P[c.id].d<5?'dni':'dní'}</b>${tracks(c)?`<small>${fmtH(P[c.id].h)} h</small>`:''}</div>`).join('')}</div>
+ ${paid.length?`<h3>Zárobok podľa práce</h3><div class="cats">${paid.map(c=>{const p=P[c.id];return `<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${fmt(p.m)}</b><small>${c.pay==='hour'?fmtH(p.h)+' h × '+fmt(c.rate):p.d+' × '+fmt(c.rate)}</small>${p.miss?`<small class="w">⚠ ${p.miss} ${p.miss===1?'deň':p.miss<5?'dni':'dní'} bez platného času</small>`:''}</div>`}).join('')}</div>`:''}
+ <p class="note">Hrubý odhad, bez daní a odvodov.</p>`;
+ // pripomienka zálohy
+ const has=Object.keys(S.days).length||Object.keys(S.t).length,ago=S.lastExport?Math.floor((Date.now()-S.lastExport)/864e5):-1;
+ $('bk').innerHTML=has&&(ago<0||ago>=30)?`<div class="bk"><span>💾 ${ago<0?'Zatiaľ nemáš žiadnu zálohu dát.':'Posledná záloha bola pred '+ago+' dňami.'}</span><button class="btn" id="bkb" style="min-height:40px">Zálohovať</button></div>`:'';
+ if($('bkb'))$('bkb').onclick=exportData;
+ updBar()}
+
+const mv=n=>{V=new Date(V.getFullYear(),V.getMonth()+n,1);render()};
+$('pv').onclick=()=>mv(-1);$('nx').onclick=()=>mv(1);
+$('td').onclick=()=>{V=new Date();V.setDate(1);render()};
+
+/* ---- výber viacerých dní ---- */
+function updBar(){$('bar').classList.toggle('on',multi);$('cnt').textContent=sel.size;
+ $('bch').innerHTML=S.cats.map(c=>`<button class="chip" style="--h:${c.h}" data-c="${c.id}">${esc(c.name)}</button>`).join('')+'<button class="chip g" data-c="">Vymazať</button>'}
+function setMulti(on){multi=on;if(!on){sel.clear();document.querySelectorAll('.day.sel').forEach(e=>e.classList.remove('sel'))}
+ document.body.classList.toggle('multi',on);$('g').classList.toggle('multi',on);$('ms').classList.toggle('on',on);$('ms').textContent=on?'Hotovo':'Vybrať viac dní';updBar()}
+$('ms').onclick=()=>setMulti(!multi);
+$('bx').onclick=()=>{sel.clear();document.querySelectorAll('.day.sel').forEach(e=>e.classList.remove('sel'));updBar()};
+let bdn=null;$('bch').addEventListener('pointerdown',e=>{bdn=e.target.closest('.chip')});
+$('bch').addEventListener('pointerup',e=>{const b=e.target.closest('.chip');if(!b||b!==bdn)return;bdn=null;if(!b)return;if(!sel.size){toast('Najprv ťukni na dni v kalendári');return}
+ const id=b.dataset.c,n=sel.size;sel.forEach(x=>{if(id)S.days[x]=id;else{delete S.days[x];delete S.t[x]}});sel.clear();save();render();
+ toast(id?`${cat(id).name}: priradené ${n} ${n===1?'dňu':'dňom'}`:`Vymazané: ${n}`)});
+
+const G=$('g');let pd=null;
+const keyAt=(x,y)=>{const el=document.elementFromPoint(x,y),d=el&&el.closest&&el.closest('.day');return d&&!d.classList.contains('out')?d.dataset.k:null};
+function apply(key,op){op==='add'?sel.add(key):sel.delete(key);const el=G.querySelector(`[data-k="${key}"]`);if(el)el.classList.toggle('sel',sel.has(key));$('cnt').textContent=sel.size}
+G.addEventListener('pointerdown',e=>{if(e.button>0)return;const key=keyAt(e.clientX,e.clientY);pd={x:e.clientX,y:e.clientY,key,moved:false,lp:false,op:null};
+ if(multi){if(key){pd.op=sel.has(key)?'del':'add';apply(key,pd.op)}}
+ else if(key)pd.timer=setTimeout(()=>{if(!pd||pd.moved)return;pd.lp=true;setMulti(true);pd.op='add';apply(key,'add');try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}},450)});
+G.addEventListener('pointermove',e=>{if(!pd)return;if(!pd.moved&&Math.hypot(e.clientX-pd.x,e.clientY-pd.y)>10){pd.moved=true;if(!pd.lp)clearTimeout(pd.timer)}
+ if(pd.op&&pd.moved){const key=keyAt(e.clientX,e.clientY);if(key)apply(key,pd.op)}});
+G.addEventListener('pointerup',e=>{if(!pd)return;clearTimeout(pd.timer);const p=pd;pd=null;if(p.lp||p.op)return;
+ const dx=e.clientX-p.x,dy=e.clientY-p.y;
+ if(!p.moved){if(p.key)openDay(p.key)}
+ else if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)mv(dx<0?1:-1)});
+G.addEventListener('pointercancel',()=>{if(pd)clearTimeout(pd.timer);pd=null});
+G.addEventListener('contextmenu',e=>e.preventDefault());
+
+/* ---- detail dňa ---- */
+function openDay(key){dKey=key;drawDay();openOv('dov')}
+function drawDay(){const key=dKey,d=pk(key),c=cat(S.days[key]),t=S.t[key]||{s:'',e:'',b:0,n:''};
+ if(d.getMonth()!==V.getMonth()||d.getFullYear()!==V.getFullYear()){V=new Date(d.getFullYear(),d.getMonth(),1);render()}
+ $('dt').textContent=d.toLocaleDateString('sk-SK',{weekday:'short',day:'numeric',month:'long'}).replace(/^./,x=>x.toUpperCase());
+ let h=`<label class="l">Kategória</label><div class="chips" id="dch">${S.cats.map(x=>`<button class="chip${c&&c.id===x.id?' on':''}" style="--h:${x.h}" data-c="${x.id}">${esc(x.name)}</button>`).join('')}${c?'<button class="chip g" data-c="">Žiadna</button>':''}</div>`;
+ if(tracks(c)){let bo='';for(let b=0;b<=240;b+=5)bo+=`<option value="${b}"${(+t.b||0)===b?' selected':''}>${b} min${b>=60&&b%60===0?' ('+b/60+' h)':''}</option>`;
+  h+=`<div class="tr"><div><label class="l">Začiatok</label><input type="time" id="ds" value="${t.s}"></div><div><label class="l">Koniec</label><input type="time" id="de" value="${t.e}"></div></div>
+  <label class="l">Prestávka (neplatená)</label><select id="dbr">${bo}</select>
+  <div class="res" id="dres"></div>
+  ${S.lastT&&!t.s&&!t.e?`<button class="lnk" id="dq" style="width:100%;margin-top:6px">Vyplniť ako naposledy: ${S.lastT.s} – ${S.lastT.e}</button>`:''}`}
+ h+=`<label class="l">Poznámka (nepovinné)</label><textarea id="dnote" placeholder="napr. čo si robil">${esc(t.n||'')}</textarea>`;
+ $('db').innerHTML=h;updRes()}
+function updRes(){const r=$('dres');if(!r)return;const x=dayH(dKey),t=S.t[dKey];
+ if(x===null){r.className='res';r.innerHTML=t&&(t.s||t.e)?'Doplň začiatok aj koniec':'Ťukni na čas a nastav ho kolieskom'}
+ else if(x===-1){r.className='res w';r.textContent='Koniec musí byť po začiatku (a prestávka kratšia ako smena)'}
+ else{const c=cat(S.days[dKey]);r.className='res';r.innerHTML=`Odpracované: <b>${fmtH(x)} h</b>${c&&c.pay==='hour'&&c.rate?` · ${fmt(x*c.rate)}`:''}`}}
+function setT(f,v){const t=tget(dKey);t[f]=v;if(f!=='n'&&t.s&&t.e&&dayH(dKey)>=0)S.lastT={s:t.s,e:t.e};tclean(dKey);save();updRes();render()}
+$('db').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b&&b.parentNode.id==='dch'){const id=b.dataset.c;if(id)S.days[dKey]=id;else delete S.days[dKey];save();render();drawDay();return}
+ if(e.target.id==='dq'){const t=tget(dKey);t.s=S.lastT.s;t.e=S.lastT.e;save();render();drawDay()}});
+$('db').addEventListener('input',e=>{const id=e.target.id;if(id==='ds')setT('s',vt(e.target.value));else if(id==='de')setT('e',vt(e.target.value));else if(id==='dnote')setT('n',e.target.value.slice(0,2000))});
+$('db').addEventListener('change',e=>{const id=e.target.id;if(id==='dbr')setT('b',+e.target.value||0);else if(id==='ds')setT('s',vt(e.target.value));else if(id==='de')setT('e',vt(e.target.value))});
+const step=n=>{const d=pk(dKey);d.setDate(d.getDate()+n);dKey=kd(d);drawDay()};
+$('dp').onclick=()=>step(-1);$('dn').onclick=()=>step(1);
+$('dclr').onclick=()=>{delete S.days[dKey];delete S.t[dKey];save();render();drawDay();toast('Deň vymazaný')};
+$('dok').onclick=$('dx').onclick=()=>closeOv('dov');
+
+/* ---- výber mesiaca ---- */
+function drawMp(){const t=new Date();$('pyt').textContent=PY;$('mg').innerHTML=MN.map((n,i)=>`<button class="mo${PY===V.getFullYear()&&i===V.getMonth()?' cur':''}${PY===t.getFullYear()&&i===t.getMonth()?' cu':''}" data-m="${i}">${n}</button>`).join('')}
+$('mt').onclick=()=>{PY=V.getFullYear();drawMp();openOv('mov')};
+$('py0').onclick=()=>{PY--;drawMp()};$('py1').onclick=()=>{PY++;drawMp()};$('mx').onclick=()=>closeOv('mov');
+$('mg').onclick=e=>{const b=e.target.closest('.mo');if(!b)return;V=new Date(PY,+b.dataset.m,1);closeOv('mov');render()};
+
+/* ---- nastavenia ---- */
+function openSet(){draft={cats:JSON.parse(JSON.stringify(S.cats)),theme:S.theme};drawCats();$('sth').value=draft.theme;drawBk();openOv('sov')}
+function drawBk(){$('lbk').textContent=S.lastExport?'Posledná záloha: '+new Date(S.lastExport).toLocaleDateString('sk-SK'):'Zatiaľ si nerobil žiadnu zálohu.'}
+function drawCats(){$('scats').innerHTML=draft.cats.map((c,i)=>`<div class="row">
+ <div class="rh"><input type="text" data-n="${i}" value="${esc(c.name)}" placeholder="Názov práce" maxlength="60"><button class="del" data-d="${i}" aria-label="Zmazať">🗑</button></div>
+ <div class="pay"><select data-p="${i}"><option value="day"${c.pay!=='hour'?' selected':''}>Fixná suma za deň</option><option value="hour"${c.pay==='hour'?' selected':''}>Hodinová sadzba</option></select>
+ <input type="text" inputmode="decimal" data-r="${i}" value="${c.rate?String(c.rate).replace('.',','):''}" placeholder="${c.pay==='hour'?'€ / hod.':'€ / deň'}"></div>
+ <p class="hint">${c.pay==='hour'?'Zárobok = odpracované hodiny × sadzba.':'Zárobok = počet dní × suma. Ak sa neplatí (napr. voľno), nechaj sumu prázdnu.'}</p>
+ <label class="ck${c.pay==='hour'?' dis':''}"><input type="checkbox" data-t="${i}"${tracks(c)?' checked':''}${c.pay==='hour'?' disabled':''}>Zaznamenávať čas (začiatok – koniec)</label>
+ ${c.pay==='hour'?'<p class="hint">Pri hodinovej sadzbe sa čas zaznamenáva vždy, počíta sa z neho zárobok.</p>':''}
+ <label class="ck"><input type="checkbox" data-w="${i}"${c.work?' checked':''}>Počítať ako pracovný deň</label>
+ <div class="sws">${HUES.map(h=>`<span class="sw${h===c.h?' on':''}" style="--h:${h}" data-s="${i}:${h}"></span>`).join('')}</div></div>`).join('')}
+$('scats').addEventListener('input',e=>{const d=e.target.dataset;if(d.n!=null)draft.cats[d.n].name=e.target.value;if(d.r!=null)draft.cats[d.r].rate=num(e.target.value)});
+$('scats').addEventListener('change',e=>{const d=e.target.dataset;if(d.p!=null){draft.cats[d.p].pay=e.target.value;if(e.target.value==='hour')draft.cats[d.p].track=true;drawCats()}
+ else if(d.t!=null)draft.cats[d.t].track=e.target.checked;else if(d.w!=null)draft.cats[d.w].work=e.target.checked});
+$('scats').addEventListener('click',e=>{const t=e.target,d=t.dataset;
+ if(d.s){const[i,h]=d.s.split(':');draft.cats[i].h=+h;drawCats()}
+ else if(d.d!=null){const c=draft.cats[d.d],n=Object.values(S.days).filter(x=>x===c.id).length;
+  if(n&&!confirm(`„${c.name}“ je priradená ${n} dňom. Po uložení sa tieto dni z kalendára vymažú. Pokračovať?`))return;draft.cats.splice(d.d,1);drawCats()}});
+$('sadd').onclick=()=>{const used=draft.cats.map(c=>c.h),h=HUES.find(x=>!used.includes(x))??230;draft.cats.push({id:'c'+Date.now().toString(36),name:'',work:true,h,pay:'day',rate:0,track:false});drawCats();const ins=$('scats').querySelectorAll('input[data-n]');ins[ins.length-1].focus()};
+$('sth').onchange=e=>{draft.theme=e.target.value};
+$('ssv').onclick=()=>{S.cats=draft.cats.map(c=>Object.assign(c,{name:c.name.trim()||'Bez názvu',track:c.pay==='hour'||!!c.track}));S.theme=draft.theme;
+ for(const x in S.days)if(!cat(S.days[x]))delete S.days[x];save();applyTheme();closeOv('sov');render();toast('Nastavenia uložené')};
+$('scn').onclick=$('sx').onclick=()=>closeOv('sov');
+$('st').onclick=openSet;
+
+/* ---- záloha ---- */
+async function exportData(){const d=new Date(),name=`planovac-zaloha-${kd(d)}.json`,txt=JSON.stringify(Object.assign({},S,{lastExport:Date.now()}),null,1);
+ const done=()=>{S.lastExport=Date.now();save();drawBk();render();toast('Záloha vytvorená')};
+ try{const file=new File([txt],name,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});done();return}
+ }catch(e){if(e&&e.name==='AbortError')return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);done()}
+$('exp').onclick=exportData;
+$('imp').onclick=()=>$('fi').click();
+$('fi').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.cats)||!o.days||typeof o.days!=='object')throw new Error('Toto nie je záloha Plánovača smien.');
+  const nd=Object.keys(o.days).length;if(!confirm(`Načítať zálohu (${o.cats.length} kategórií, ${nd} označených dní)? Všetky súčasné dáta v tomto zariadení sa nahradia.`))return;
+  const keep=S.lastExport;S=normalize(o);if(!S.lastExport)S.lastExport=keep;save();applyTheme();closeOv('sov');render();toast('Záloha načítaná')}
+ catch(err){alert('Import zlyhal: '+(err.message||err))}};
+
+/* ---- okná ---- */
+let ovAt=0;function openOv(id){ovAt=Date.now();$(id).classList.add('on')}
+function closeOv(id){$(id).classList.remove('on')}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o&&Date.now()-ovAt>600)closeOv(o.id)}));
+addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.ov.on').forEach(o=>closeOv(o.id));if(multi)setMulti(false);return}
+ if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)||document.querySelector('.ov.on'))return;
+ if(e.key==='ArrowLeft')mv(-1);else if(e.key==='ArrowRight')mv(1)});
+// po návrate do aplikácie (napr. ďalší deň) obnov „dnes“
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+
+applyTheme();render();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body></html>
