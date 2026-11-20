@@ -63,6 +63,8 @@ h3{font-size:11px;color:var(--mut);text-transform:uppercase;margin:16px 4px 8px;
 .cat b{display:block;font-size:22px;margin:2px 0}
 .cat small{display:block;font-weight:500;font-size:12px}
 .cat .w{color:var(--warn)}
+.nb{border:1px solid var(--bd);border-radius:12px;padding:10px 12px;font-size:14px}.nb>div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.nb>div:first-child{font-weight:600}.nb .m{color:#dc2626}body.dark .nb .m{color:#f87171}
+.oh{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:6px;align-items:end;margin-bottom:8px}.oh .l{margin:0 0 4px;font-size:11px}.oh input{padding:8px;text-align:right}.oh select{padding:8px 24px 8px 8px;background-position:calc(100% - 14px) 50%,calc(100% - 8px) 50%}
 .note{font-size:12px;color:var(--mut);margin:12px 4px 2px}
 .bk{display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:8px 8px 8px 12px;font-size:13px;margin-bottom:12px}
 body.dark .bk{background:#2a210a;border-color:#713f12;color:#fcd34d}
@@ -157,6 +159,14 @@ body.multi #toast{bottom:calc(env(safe-area-inset-bottom) + 180px)}
   <h4 style="margin:4px 0 10px;font-size:12px;text-transform:uppercase;color:var(--mut)">Moje práce a kategórie</h4>
   <div id="scats"></div>
   <button class="add" id="sadd">+ Pridať prácu / kategóriu</button>
+  <div class="sec"><h4>Čistý zárobok (SZČO)</h4>
+   <label class="ck"><input type="checkbox" id="ton">Počítať čistý zárobok</label>
+   <label class="l">Rezerva na daň (% z hrubého, nepovinné)</label><input type="text" inputmode="decimal" id="tres" placeholder="0">
+   <label class="l">Mesačné odvody podľa obdobia</label>
+   <div id="todv"></div>
+   <button class="add" id="tadd" style="min-height:44px">+ Nové sumy od…</button>
+   <p class="hint">Keď sa odvody zmenia (zvyčajne od januára), pridaj nový riadok s mesiacom, odkedy platia. Staršie mesiace sa počítajú so starými sumami.</p>
+  </div>
   <div class="sec"><h4>Vzhľad</h4><select id="sth"><option value="auto">Podľa iPhonu (svetlý / tmavý)</option><option value="light">Vždy svetlý</option><option value="dark">Vždy tmavý</option></select></div>
   <div class="sec"><h4>Záloha dát</h4>
    <p class="hint" id="lbk"></p>
@@ -178,6 +188,7 @@ const DEF={cats:[
  {id:'a',name:'Hodinová práca',work:true,h:48,pay:'hour',rate:0},
  {id:'b',name:'Fixná práca',work:true,h:355,pay:'day',rate:0},
  {id:'c',name:'Voľno',work:false,h:150,pay:'day',rate:0}],days:{}};
+const DEF_TAX={on:true,res:0,hist:[{from:'2026-01',zp:121.92,sp:303.11},{from:'2027-01',zp:129.6,sp:322.21}]};
 const $=i=>document.getElementById(i),pad=n=>String(n).padStart(2,'0'),
  k=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`,kd=d=>k(d.getFullYear(),d.getMonth(),d.getDate()),
  pk=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)},
@@ -195,6 +206,8 @@ function normalize(o){o=o&&typeof o==='object'?o:DEF;const n={v:2,cats:[],days:{
  if(o.t&&typeof o.t==='object')for(const x in o.t){const t=o.t[x];if(isKey(x)&&t&&typeof t==='object'){const r={s:vt(t.s),e:vt(t.e),b:Math.max(0,Math.min(600,+t.b||0)),n:String(t.n||'').slice(0,2000)};if(r.s||r.e||r.n)n.t[x]=r}}
  n.theme=['auto','light','dark'].includes(o.theme)?o.theme:(o.dark===true?'dark':'auto');
  n.lastExport=+o.lastExport||0;
+ const tx=o.tax&&typeof o.tax==='object'?o.tax:DEF_TAX,hs=(Array.isArray(tx.hist)?tx.hist:[]).filter(h=>h&&/^\d{4}-\d\d$/.test(h.from)).map(h=>({from:h.from,zp:Math.max(0,+h.zp||0),sp:Math.max(0,+h.sp||0)})).sort((a,b)=>a.from<b.from?-1:1);
+ n.tax={on:tx.on!==false,res:Math.max(0,Math.min(100,+tx.res||0)),hist:hs.length?hs:JSON.parse(JSON.stringify(DEF_TAX.hist))};
  if(o.lastT&&vt(o.lastT.s)&&vt(o.lastT.e))n.lastT={s:o.lastT.s,e:o.lastT.e};
  return n}
 
@@ -202,6 +215,8 @@ let S;try{S=normalize(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){S=
 let V=new Date();V.setDate(1);
 let multi=false,sel=new Set(),dKey=null,draft=null,PY=0;
 const cat=id=>S.cats.find(c=>c.id===id);
+function odv(mk){const h=S.tax.hist;let r=h[0];for(const x of h)if(x.from<=mk)r=x;return r||{zp:0,sp:0}}
+const fmtM=mk=>{const[y,m]=mk.split('-');return +m+'/'+y};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Uloženie zlyhalo!')}}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
@@ -237,13 +252,16 @@ function render(){
  const paid=S.cats.filter(c=>c.rate>0);
  $('stats').innerHTML=`<div class="title">Štatistiky – ${MN[m]} ${y}</div>
  <div class="stats"><div class="box a">Pracovné dni<b>${w}</b></div><div class="box">Neoznačené dni<b>${u}</b></div>
- <div class="box">Odpracované hodiny<b>${fmtH(tot)} h</b></div><div class="box g">Odhad zárobku<b>${fmt(earn)}</b></div></div>
+ <div class="box">Odpracované hodiny<b>${fmtH(tot)} h</b></div><div class="box${S.tax.on&&earn>0?'':' g'}">Hrubý zárobok<b>${fmt(earn)}</b></div></div>${netHtml(y+'-'+pad(m+1),earn)}
  <h3>Dni podľa kategórie</h3><div class="cats">${S.cats.map(c=>`<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${P[c.id].d} ${P[c.id].d===1?'deň':P[c.id].d>1&&P[c.id].d<5?'dni':'dní'}</b>${tracks(c)?`<small>${fmtH(P[c.id].h)} h</small>`:''}</div>`).join('')}</div>
  ${paid.length?`<h3>Zárobok podľa práce</h3><div class="cats">${paid.map(c=>{const p=P[c.id];return `<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${fmt(p.m)}</b><small>${c.pay==='hour'?fmtH(p.h)+' h × '+fmt(c.rate):p.d+' × '+fmt(c.rate)}</small>${p.miss?`<small class="w">⚠ ${p.miss} ${p.miss===1?'deň':p.miss<5?'dni':'dní'} bez platného času</small>`:''}</div>`}).join('')}</div>`:''}
- <p class="note">Hrubý odhad, bez daní a odvodov.</p>`;
+ <p class="note">${S.tax.on?'Odhad. Daň sa reálne platí raz ročne v daňovom priznaní.':'Hrubý odhad, bez daní a odvodov.'}</p>`;
 
  updBar()}
 
+function netHtml(mk,g){if(!S.tax.on||!(g>0))return '';const o=odv(mk),rz=Math.round(g*S.tax.res)/100,net=g-o.zp-o.sp-rz;
+ return `<h3>Čistý zárobok (SZČO)</h3><div class="nb"><div><span>Hrubý zárobok</span><span>${fmt(g)}</span></div><div class="m"><span>− zdravotné poistenie</span><span>−${fmt(o.zp)}</span></div><div class="m"><span>− sociálne poistenie</span><span>−${fmt(o.sp)}</span></div>${S.tax.res>0?`<div class="m"><span>− rezerva na daň ${fmtH(S.tax.res)} %</span><span>−${fmt(rz)}</span></div>`:''}</div>
+ <div class="box g" style="margin-top:8px;flex-direction:row;justify-content:space-between;align-items:center">Čistý (odhad)<b>${fmt(net)}</b></div>`}
 const mv=n=>{V=new Date(V.getFullYear(),V.getMonth()+n,1);render()};
 $('pv').onclick=()=>mv(-1);$('nx').onclick=()=>mv(1);
 $('td').onclick=()=>{V=new Date();V.setDate(1);render()};
@@ -309,7 +327,7 @@ $('py0').onclick=()=>{PY--;drawMp()};$('py1').onclick=()=>{PY++;drawMp()};$('mx'
 $('mg').onclick=e=>{const b=e.target.closest('.mo');if(!b)return;V=new Date(PY,+b.dataset.m,1);closeOv('mov');render()};
 
 /* ---- nastavenia ---- */
-function openSet(){draft={cats:JSON.parse(JSON.stringify(S.cats)),theme:S.theme};drawCats();$('sth').value=draft.theme;drawBk();openOv('sov')}
+function openSet(){draft={cats:JSON.parse(JSON.stringify(S.cats)),theme:S.theme,tax:JSON.parse(JSON.stringify(S.tax))};drawCats();drawTax();$('ton').checked=draft.tax.on;$('tres').value=draft.tax.res?String(draft.tax.res).replace('.',','):'';$('sth').value=draft.theme;drawBk();openOv('sov')}
 function drawBk(){$('lbk').textContent=S.lastExport?'Posledná záloha: '+new Date(S.lastExport).toLocaleDateString('sk-SK'):'Zatiaľ si nerobil žiadnu zálohu.'}
 function drawCats(){$('scats').innerHTML=draft.cats.map((c,i)=>`<div class="row">
  <div class="rh"><input type="text" data-n="${i}" value="${esc(c.name)}" placeholder="Názov práce" maxlength="60"><button class="del" data-d="${i}" aria-label="Zmazať">🗑</button></div>
@@ -329,7 +347,17 @@ $('scats').addEventListener('click',e=>{const t=e.target,d=t.dataset;
   if(n&&!confirm(`„${c.name}“ je priradená ${n} dňom. Po uložení sa tieto dni z kalendára vymažú. Pokračovať?`))return;draft.cats.splice(d.d,1);drawCats()}});
 $('sadd').onclick=()=>{const used=draft.cats.map(c=>c.h),h=HUES.find(x=>!used.includes(x))??230;draft.cats.push({id:'c'+Date.now().toString(36),name:'',work:true,h,pay:'day',rate:0,track:false});drawCats();const ins=$('scats').querySelectorAll('input[data-n]');ins[ins.length-1].focus()};
 $('sth').onchange=e=>{draft.theme=e.target.value};
-$('ssv').onclick=()=>{S.cats=draft.cats.map(c=>Object.assign(c,{name:c.name.trim()||'Bez názvu',track:c.pay==='hour'||!!c.track}));S.theme=draft.theme;
+const n2=v=>v?(+v).toFixed(2).replace('.',','):'';
+function mOpts(sel){const y0=new Date().getFullYear(),ys=new Set();for(let y=y0-3;y<=y0+6;y++)ys.add(y);ys.add(+sel.slice(0,4));let o='';[...ys].sort().forEach(y=>{for(let m=1;m<=12;m++){const v=y+'-'+pad(m);o+=`<option value="${v}"${v===sel?' selected':''}>${m}/${y}</option>`}});return o}
+function drawTax(){$('todv').innerHTML=draft.tax.hist.map((h,i)=>`<div class="oh"><div><label class="l">Od mesiaca</label><select data-of="${i}">${mOpts(h.from)}</select></div><div><label class="l">Zdrav. €</label><input type="text" inputmode="decimal" data-zp="${i}" value="${n2(h.zp)}"></div><div><label class="l">Soc. €</label><input type="text" inputmode="decimal" data-sp="${i}" value="${n2(h.sp)}"></div><button class="del" data-od="${i}" aria-label="Zmazať"${draft.tax.hist.length<2?' style="visibility:hidden"':''}>🗑</button></div>`).join('')}
+const numz=v=>{const x=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isFinite(x)&&x>=0?x:0};
+$('todv').addEventListener('input',e=>{const d=e.target.dataset;if(d.zp!=null)draft.tax.hist[d.zp].zp=numz(e.target.value);if(d.sp!=null)draft.tax.hist[d.sp].sp=numz(e.target.value)});
+$('todv').addEventListener('change',e=>{const d=e.target.dataset;if(d.of!=null&&/^\d{4}-\d\d$/.test(e.target.value))draft.tax.hist[d.of].from=e.target.value});
+$('todv').addEventListener('click',e=>{const d=e.target.dataset;if(d.od!=null&&draft.tax.hist.length>1){draft.tax.hist.splice(d.od,1);drawTax()}});
+$('tadd').onclick=()=>{const h=draft.tax.hist,last=h[h.length-1],t=new Date(),y=Math.max(t.getFullYear()+1,+last.from.slice(0,4)+1);h.push({from:y+'-01',zp:last.zp,sp:last.sp});drawTax()};
+$('ton').onchange=e=>{draft.tax.on=e.target.checked};
+$('tres').oninput=e=>{draft.tax.res=Math.min(100,numz(e.target.value))};
+$('ssv').onclick=()=>{S.cats=draft.cats.map(c=>Object.assign(c,{name:c.name.trim()||'Bez názvu',track:c.pay==='hour'||!!c.track}));S.theme=draft.theme;draft.tax.hist.sort((a,b)=>a.from<b.from?-1:1);S.tax=draft.tax;
  for(const x in S.days)if(!cat(S.days[x]))delete S.days[x];save();applyTheme();closeOv('sov');render();toast('Nastavenia uložené')};
 $('scn').onclick=$('sx').onclick=()=>closeOv('sov');
 $('st').onclick=openSet;
