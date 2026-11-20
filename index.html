@@ -132,7 +132,6 @@ body.multi #toast{bottom:calc(env(safe-area-inset-bottom) + 180px)}
  <div class="tb"><button class="lnk" id="td">Dnes</button><button class="lnk" id="ms">Vybrať viac dní</button></div>
  <div class="grid" id="g"></div>
 </div>
-<div id="bk"></div>
 <div class="card" id="stats"></div>
 </div>
 
@@ -226,7 +225,7 @@ function render(){
  let h=['PO','UT','ST','ŠT','PI','SO','NE'].map((d,i)=>`<div class="dow${i>4?' we':''}">${d}</div>`).join('');
  for(let i=0;i<rows;i++){const dt=new Date(y,m,1-off+i),inm=dt.getMonth()===m,key=kd(dt),c=inm&&cat(S.days[key]),t=S.t[key];
   let hl='';
-  if(inm&&tracks(c)){const x=dayH(key);if(x>=0)hl=`<span class="h">${fmtH(x)} h</span>`;else if(x===-1)hl='<span class="h warn">⚠ čas</span>';else if(c.pay==='hour'&&key<=todayK)hl='<span class="h warn">? h</span>'}
+  if(inm&&tracks(c)){const x=dayH(key);if(x!==null&&x>=0)hl=`<span class="h">${fmtH(x)} h</span>`;else if(x===-1)hl='<span class="h warn">⚠ čas</span>';else if(c.pay==='hour'&&key<=todayK)hl='<span class="h warn">? h</span>'}
   h+=`<div class="day${inm?'':' out'}${i%7>4?' we':''}${c?' has':''}${sel.has(key)?' sel':''}" data-k="${key}"${c?` style="--h:${c.h}"`:''}>`+
    `<span class="n${inm&&key===todayK?' today':''}">${dt.getDate()}</span>${c?`<span class="c">${esc(c.name)}</span>`:''}${hl}${inm&&t&&t.n?'<span class="nt"></span>':''}</div>`}
  $('g').innerHTML=h;
@@ -242,10 +241,7 @@ function render(){
  <h3>Dni podľa kategórie</h3><div class="cats">${S.cats.map(c=>`<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${P[c.id].d} ${P[c.id].d===1?'deň':P[c.id].d>1&&P[c.id].d<5?'dni':'dní'}</b>${tracks(c)?`<small>${fmtH(P[c.id].h)} h</small>`:''}</div>`).join('')}</div>
  ${paid.length?`<h3>Zárobok podľa práce</h3><div class="cats">${paid.map(c=>{const p=P[c.id];return `<div class="cat" style="--h:${c.h}">${esc(c.name)}<b>${fmt(p.m)}</b><small>${c.pay==='hour'?fmtH(p.h)+' h × '+fmt(c.rate):p.d+' × '+fmt(c.rate)}</small>${p.miss?`<small class="w">⚠ ${p.miss} ${p.miss===1?'deň':p.miss<5?'dni':'dní'} bez platného času</small>`:''}</div>`}).join('')}</div>`:''}
  <p class="note">Hrubý odhad, bez daní a odvodov.</p>`;
- // pripomienka zálohy
- const has=Object.keys(S.days).length||Object.keys(S.t).length,ago=S.lastExport?Math.floor((Date.now()-S.lastExport)/864e5):-1;
- $('bk').innerHTML=has&&(ago<0||ago>=30)?`<div class="bk"><span>💾 ${ago<0?'Zatiaľ nemáš žiadnu zálohu dát.':'Posledná záloha bola pred '+ago+' dňami.'}</span><button class="btn" id="bkb" style="min-height:40px">Zálohovať</button></div>`:'';
- if($('bkb'))$('bkb').onclick=exportData;
+
  updBar()}
 
 const mv=n=>{V=new Date(V.getFullYear(),V.getMonth()+n,1);render()};
